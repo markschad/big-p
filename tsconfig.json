@@ -1,0 +1,22 @@
+{
+	"compilerOptions": {
+		"target": "es5",
+		"module": "commonjs",
+		"moduleResolution": "node",
+		"removeComments": false,
+		"jsx": "react",
+		"rootDir": "./src",
+		"outDir": "./dist",
+		"sourceMap": true,
+		"sourceRoot": "./src",
+		"emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+		"declaration": true
+	},
+	"exclude": [
+		"dist",
+		"node_modules",
+		".vscode",
+		".git"
+	]
+}

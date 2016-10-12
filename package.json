@@ -1,0 +1,47 @@
+{
+  "name": "big-p",
+  "version": "1.0.0",
+  "description": "A more logical take on code proof.",
+  "main": "dist/index.js",
+  "typings": "dist/index",
+  "bin": {
+    "bigp": "./bin/bigp.js"
+  },
+  "scripts": {
+    "postinstall": "typings install && npm run build",
+    "prebuild": "rimraf dist",
+    "build": "tsc || exit 0",
+    "build:w": "tsc -w",
+    "pretest": "npm run build",
+    "test": "npm run tape",
+    "tape": "tape dist/**/*.spec.js",
+    "tape:w": "watch -p \"dist/**/*.js\" -c \"npm run -s tape\"",
+    "pretdd": "npm run build",
+    "tdd": "concurrently --raw \"npm run -s build:w\" \"npm run -s tape:w\"",
+    "example": "node bin/bigp.js example/**/*.spec.js"
+  },
+  "repository": "https://github.com/markschad/ms-ts-npm-boilerplate.git",
+  "keywords": [
+    "typescript",
+    "javascript",
+    "tdd",
+    "tap",
+    "proof",
+    "prove",
+    "test runner",
+    "test",
+    "runner"
+  ],
+  "author": "Mark Schad",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^3.0.0",
+    "rimraf": "^2.5.4",
+    "typescript": "^2.0.3",
+    "typings": "^1.4.0",
+    "watch-cli": "^0.2.1"
+  },
+  "dependencies": {
+    "node-glob": "^1.2.0"
+  }
+}
