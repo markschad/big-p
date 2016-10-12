@@ -6,9 +6,11 @@ P
 ==
 
 > What is it?
+
 A concept test runner that keeps you honest.
 
 > Why is it?
+
 P takes a more logical look at code testing. We can prove some small component `A` works.  Then, assuming `A`, we can prove some other component `B` also works.
 
 Example
