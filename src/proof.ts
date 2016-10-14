@@ -1,24 +1,35 @@
-import { Vertex } from "ms-dag-ts";
-import { P } from "./p";
-import { IProof } from "./iproof";
-import { SetupCallback, TeardownCallback, ProveCallback } from "./callback";
+import { Emitter } from "./emitter";
 
 /**
- * Takes any value and produces a function which returns that value.
+ * Callback signature for Proof.prototype.setup.
  */
-const _const = c => () => c;
+export interface SetupCallback {
+	(): any;
+}
 
 /**
- * Represents a proof.
+ * Callback signature for Proof.prototype.teardown.
  */
-export class Proof implements IProof {
+export interface TeardownCallback {
+	(fixtures: any): void
+}
 
-	private _vertex: Vertex;
+/**
+ * Callback signature for Proof.prototype.prove.
+ */
+export interface ProveCallback {
+	(fixtures: any): void
+}
 
-	private _setup: Function = _const({});
-	private _teardown: Function = _const({});
+/**
+ * Represents a proof which may include a collection of partial proofs.
+ */
+export class Proof {
 
-	private _partials: {
+	private _declared: boolean = false;
+	private _setupCb: SetupCallback;
+	private _teardownCb: TeardownCallback;
+	private _partialProofs: {
 		description: string,
 		callback: ProveCallback
 	}[] = [];
@@ -26,91 +37,72 @@ export class Proof implements IProof {
 	/**
 	 * Instantiates a new instance of Proof.
 	 */
-	constructor(private _name: string) {
-		const e = P.getEntity(_name);
-		if (e) {
-			if (e.proof.defined) {
-				throw new Error(`Proof '${_name}' already exists.`);
-			}
-			this._vertex = e.vertex;
-		}
-		else {
-			this._vertex = P.graph.addVertex();
-		}
-		this._vertex.content = this;
-		console.log("Defined: " + _name);
-	}
-
-
-	/** Gets the name of this proof. */
-	get name(): string { return this._name; }
-
-	/** A real proof is always defined. */
-	readonly defined: boolean = true;
+	constructor(public readonly name: string) { }
 
 	/**
-	 * Define the assumptions this proof makes.
+	 * Gets the number of partial proofs defined by this instance.
+	 */
+	get count(): number { return this._partialProofs.length; }
+
+	get declared(): boolean { return this._declared; }
+
+	/**
+	 * Defines the assumptions made by this instance.
 	 */
 	assume(assumptions: string[]): this {
-		for (let assumption of assumptions) {
-			const e = P.reserveEntity(assumption);
-			try {
-				e.vertex.connectTo(this._vertex);
-			}
-			catch (err) {
-				throw new Error(`Proof '${e.proof.name}' already assumes '${this.name}'.  Cannot create a circular proof.`);
-			}
-		}
-		this._vertex.reflow();
 		return this;
 	}
 
 	/**
-	 * Define the setup procedure.
+	 * Defines the setup routine for this instance.
 	 */
 	setup(cb: SetupCallback): this {
-		this._setup = cb;
+		this._setupCb = cb;
 		return this;
 	}
 
 	/**
-	 * Defines the procedure for cleaning up after a set of proofs.
+	 * Defines the teardown routine for this instance.
 	 */
 	teardown(cb: TeardownCallback): this {
-		this._teardown = cb;
+		this._teardownCb = cb;
 		return this;
 	}
 
 	/**
-	 * Defines a new partial proof.
+	 * Defines a partial proof for this instance.
 	 */
 	prove(desc: string, cb: ProveCallback): this {
-		this._partials.push({ description: desc, callback: cb });
-		P.count++;
+		this._declared = true;
+		this._partialProofs.push({
+			description: desc,
+			callback: cb
+		});
 		return this;
 	}
 
 	/**
-	 * Tests this proof.
+	 * Tests this proof, emitting the results with the given emitter.
 	 */
-	test(emit: {(msg: string): void}): void {
-		emit("# " + this._name);
-		if (this._partials.length > 0) {
-			for (let proof of this._partials) {
+	test(emitter: Emitter): void {
+		emitter.comment(this.name);
+		if (this._partialProofs.length > 0) {
+			for (let proof of this._partialProofs) {
 				const msg = proof.description ? " " + proof.description : "";
-				const fixtures = this._setup();
+				const fixtures = this._setupCb();
 				try {
 					proof.callback(fixtures);
 				}
 				catch (err) {
-					emit("not ok" + msg);
+					emitter.notOk(msg);
 				}
 				finally {
-					this._teardown(fixtures);
+					this._teardownCb(fixtures);
 				}
-				emit("ok" + msg);
+				emitter.ok(msg);
 			}
 		}
 	}
+
 
 }

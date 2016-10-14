@@ -5,52 +5,83 @@ big-p
 P
 ==
 
-> What is it?
+P aims to help you empirically _prove_ your code.
 
-A concept test runner that keeps you honest.
+Vision
+------
 
-> Why is it?
-
-P takes a more logical look at code testing. We can prove some small component `A` works.  Then, assuming `A`, we can prove some other component `B` also works.
+* A simple framework for assembling proofs.
+* Takes advantage of TypeScript language features such as decorators for labelling provable code.
+* Test Anything Protocol output.
 
 Example
 -------
 
-The below example tests a trivial stack implementation.
-
-```javascript
+```typescript
 /**
  * mystack.js
  */
-function MyStack(thing) {
-	if (typeof thing !== "undefined") {
-		this._things = [ thing ];
+import { Provable, Trivial } from "../src";
+
+/**
+ * A simple stack implementation.
+ */
+export class MyStack {
+
+	/** All the things in the stack. */
+	private _things: any[];
+
+	/** Instantiates a new instance of MyStack. */
+	constructor(thing?) {
+		if (typeof thing !== "undefined") {
+			this._things = [ thing ];
+		}
 	}
+
+	/** Inserts a new value at the beginning of the stack. */
+	@Provable
+	push(thing): void {
+		this._things.splice(0, 0, thing);
+	}
+
+	/** Removes the first value from the stack and returns it. */
+	@Provable
+	pop(): any {
+		return this._things.splice(0);
+	}
+
+	/** Returns the length of the stack. */
+	@Trivial
+	length(): number {
+		return this._things.length;
+	}
+
+	/** Returns the first value from the stack. */
+	@Provable
+	peak(): any {
+		return this._things[0];
+	}
+
 }
-MyStack.prototype.push = function(thing) {
-	this._things.splice(0, 0, thing);
-};
-MyStack.prototype.pop = function() {
-	return this._things.splice(0);
-};
-MyStack.prototype.length = function() {
-	return this._things.length;
-};
 ```
 
 ```javascript
 /**
  * mystack.spec.js
  */
-const MyStack = require("./mystack.js");
+import { MyStack } from "./mystack";
+import { P } from "big-p";
 
 P("MyStack.constructor")
-	.prove("It creates a new instance of MyStack.", f => {
+	.assume([
+		"MyStack.prototype.length"	// Length has a trivial proof, so no P implementation is necessary.
+	])
+	.prove("it can create a new instance of MyStack.", f => {
 		const expected = true;
 		const actual = new MyStack() instanceof MyStack;
 		assert(expected === actual);
 	})
-	.prove("It can optionally initialise MyStack with one element.", f => {
+	.prove("it can optionally initialise MyStack with one element.", f => {
 		const s = new MyStack("a");
 		const actual = s.length;
 		const expected = 1;
@@ -60,6 +91,7 @@ P("MyStack.constructor")
 P("MyStack.prototype.pop")
 	.assume([
 		"MyStack.constructor",
+		"MyStack.prototype.peak",
 		"MyStack.prototype.push"		// We use MyStack.prototype.push to help setup the test.
 	])
 	.setup(() => {
@@ -68,7 +100,7 @@ P("MyStack.prototype.pop")
 		s.push("c");
 		return s;
 	})
-	.prove("It returns something.", f => {
+	.prove("it returns something.", f => {
 		const actual = f.pop();
 		const expected = "c";
 		assert(actual === expected);
@@ -94,3 +126,8 @@ P("MyStack.prototype.push")
 		assert(actual === expected);
 	});
 ```
+
+Roadmap
+-------
+
+

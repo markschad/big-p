@@ -18,7 +18,8 @@
     "tape:w": "watch -p \"dist/**/*.js\" -c \"npm run -s tape\"",
     "pretdd": "npm run build",
     "tdd": "concurrently --raw \"npm run -s build:w\" \"npm run -s tape:w\"",
-    "example": "node bin/bigp.js example/**/*.spec.js"
+    "preexample": "npm run build",
+    "example": "node bin/big-p.js dist/example/**/*.spec.js"
   },
   "repository": "https://github.com/markschad/ms-ts-npm-boilerplate.git",
   "keywords": [

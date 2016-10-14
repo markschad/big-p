@@ -1,4 +1,4 @@
-var P = require("../dist")._P;
+var _P = require("../dist")._P;
 var path = require("path");
 var glob = require("glob");
 
@@ -10,4 +10,4 @@ for (let i = 2; i < process.argv.length; i++) {
 	files.forEach(load);
 }
 
-P.test();
+_P.bigP.test();
